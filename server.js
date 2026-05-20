@@ -1,36 +1,19 @@
-const WebSocket = require("ws");
+const http = require("http");
+const fs = require("fs");
 
-const server = new WebSocket.Server({ port: 3000 });
-
-let rooms = {};
-
-server.on("connection", (socket) => {
-  socket.on("message", (msg) => {
-    const data = JSON.parse(msg);
-
-    if (data.type === "join") {
-      socket.room = data.room;
-      socket.id = data.id;
-
-      if (!rooms[socket.room]) rooms[socket.room] = [];
-      rooms[socket.room].push(socket);
-
-      const users = rooms[socket.room].map(s => s.id);
-      rooms[socket.room].forEach(s => {
-        s.send(JSON.stringify({ type: "users", users }));
-      });
+const server = http.createServer((req, res) => {
+  fs.readFile("minicraft_vmultiplayer.html", (err, data) => {
+    if (err) {
+      res.writeHead(500);
+      res.end("Erreur serveur");
+      return;
     }
-
-    if (data.to) {
-      const target = rooms[socket.room].find(s => s.id === data.to);
-      if (target) target.send(JSON.stringify(data));
-    }
-  });
-
-  socket.on("close", () => {
-    if (!socket.room) return;
-    rooms[socket.room] = rooms[socket.room].filter(s => s !== socket);
+    res.writeHead(200, { "Content-Type": "text/html" });
+    res.end(data);
   });
 });
 
-console.log("Serveur lancé sur port 3000");
+const PORT = process.env.PORT || 3000;
+server.listen(PORT, () => {
+  console.log("Serveur lancé");
+});
