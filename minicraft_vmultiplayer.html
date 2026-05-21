@@ -1,11 +1,11 @@
-let roomCode = prompt("Entre un code de partie :");
+
 <!DOCTYPE html>
 <html lang="fr">
 <head>
 <meta charset="UTF-8">
 <title>MiniCraft</title>
 <style>
-*{margin:0;padding:0;box-sizing:border-box;}
+  *{margin:0;padding:0;box-sizing:border-box;}
 html,body{width:100%;height:100%;overflow:hidden;background:#000;}
 #g{position:relative;width:100vw;height:100vh;}
 #cv{display:block;width:100%;height:100%;cursor:none;}
@@ -128,6 +128,16 @@ html,body{width:100%;height:100%;overflow:hidden;background:#000;}
 
 <script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js"></script>
 <script>
+ let roomCode = prompt("Entre un code de partie :"); 
+  const socket = new WebSocket("wss://" + location.host);
+
+socket.onopen = () => {
+  socket.send(JSON.stringify({
+    type: "join",
+    room: roomCode
+  }));
+};
+
 // ═══════════════════════════════════════════════════
 //  PIXEL TEXTURE ENGINE — faithful Minecraft 16×16
 // ═══════════════════════════════════════════════════
