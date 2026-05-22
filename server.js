@@ -2,7 +2,6 @@ const http = require("http");
 const fs = require("fs");
 const WebSocket = require("ws");
 
-// 📦 ROOMS
 let rooms = {};
 
 const server = http.createServer((req, res) => {
@@ -17,7 +16,6 @@ const server = http.createServer((req, res) => {
   });
 });
 
-// 🔌 WEBSOCKET
 const wss = new WebSocket.Server({ server });
 
 wss.on("connection", (ws) => {
@@ -29,13 +27,10 @@ wss.on("connection", (ws) => {
   ws.on("message", (message) => {
     const data = JSON.parse(message);
 
-    // 🔑 REJOINDRE UNE ROOM
     if (data.type === "join") {
-      roomCode = data.room;
+      roomCode = data.room || "default";
 
-      if (!rooms[roomCode]) {
-        rooms[roomCode] = {};
-      }
+      if (!rooms[roomCode]) rooms[roomCode] = {};
 
       rooms[roomCode][playerId] = {
         x: 0,
@@ -48,18 +43,14 @@ wss.on("connection", (ws) => {
         id: playerId,
         players: cleanPlayers(rooms[roomCode])
       }));
-
-      console.log("Joueur rejoint room :", roomCode);
     }
 
-    // 🎮 MOUVEMENT
     if (data.type === "move" && roomCode) {
       if (!rooms[roomCode][playerId]) return;
 
       rooms[roomCode][playerId].x = data.position.x;
       rooms[roomCode][playerId].y = data.position.y;
 
-      // envoyer aux joueurs de la même room
       Object.values(rooms[roomCode]).forEach((player) => {
         if (player.ws !== ws && player.ws.readyState === WebSocket.OPEN) {
           player.ws.send(JSON.stringify({
@@ -71,12 +62,10 @@ wss.on("connection", (ws) => {
     }
   });
 
-  // ❌ DECONNEXION
   ws.on("close", () => {
     if (roomCode && rooms[roomCode]) {
       delete rooms[roomCode][playerId];
 
-      // update pour les autres
       Object.values(rooms[roomCode]).forEach((player) => {
         if (player.ws.readyState === WebSocket.OPEN) {
           player.ws.send(JSON.stringify({
@@ -85,13 +74,10 @@ wss.on("connection", (ws) => {
           }));
         }
       });
-
-      console.log("Joueur quitté :", roomCode);
     }
   });
 });
 
-// 🧹 enlever les ws avant envoi au client
 function cleanPlayers(room) {
   let result = {};
   for (let id in room) {
@@ -103,7 +89,6 @@ function cleanPlayers(room) {
   return result;
 }
 
-const PORT = process.env.PORT || 3000;
-server.listen(PORT, () => {
-  console.log("Serveur lancé sur port", PORT);
+server.listen(3000, () => {
+  console.log("Serveur lancé sur http://localhost:3000");
 });
