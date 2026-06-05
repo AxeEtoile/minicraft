@@ -159,6 +159,7 @@ function initMultiplayer(roomCode) {
 
   multiSocket.onopen = () => {
     multiSocket.onmessage = (event) => {
+      console.log("MESSAGE RECU :", event.data);
   const data = JSON.parse(event.data);
 
   // 🔹 INIT
@@ -194,27 +195,19 @@ function initMultiplayer(roomCode) {
   };
 
   multiSocket.onmessage = async (msg) => {
-    let data;
-    try { data = JSON.parse(msg.data); } catch(e) { return; }
+  console.log("MESSAGE RECU :", event.data);
 
-    if (data.type === "users") {
-      data.users.forEach(id => { if (id !== playerId) createPeer(id, true); });
-    }
-    if (data.type === "offer") {
-      const pc = createPeer(data.from, false);
-      await pc.setRemoteDescription(data.offer);
-      const answer = await pc.createAnswer();
-      await pc.setLocalDescription(answer);
-      multiSocket.send(JSON.stringify({ type:"answer", answer, to: data.from }));
-    }
-    if (data.type === "answer") {
-      peers[data.from]?.pc.setRemoteDescription(data.answer);
-    }
-    if (data.type === "candidate") {
-      peers[data.from]?.pc.addIceCandidate(data.candidate);
-    }
-  };
+  const data = JSON.parse(event.data);
 
+  if (data.type === "init") {
+    playerId = data.id;
+    peers = data.players;
+  }
+
+  if (data.type === "update") {
+    peers = data.players;
+  }
+};
   multiSocket.onerror = (e) => console.warn("WebSocket erreur:", e);
 }
 
